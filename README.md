@@ -46,6 +46,8 @@
 -   ### [Supabase](https://supabase.com) for the Backend
 -   ### [Prisma](https://prisma.io) as ORM
 
+### The majority of base code is [Rphlmr's Repo](https://github.com/rphlmr/supa-stripe-stack)
+
 ### Technologies used are open for conversation. If you have a compelling reason for changing these, I am open to starting a discussion(_preferred for topics like these_) or opening an issue.
 
 ---
