@@ -35,7 +35,7 @@ const JoinFormSchema = z.object({
         .email("invalid-email")
         .transform((email) => email.toLowerCase()),
     password: z.string().min(8, "password-too-short"),
-    name: z.string().min(1, "name-too-short"),
+    name: z.string().min(4, "name-too-short"),
     redirectTo: z.string().optional(),
 });
 
@@ -56,7 +56,7 @@ export async function action({ request }: ActionArgs) {
             //     authSession: null,
             // });
             throw new StackError({
-                message: "This email has already been used",
+                message: "Email already registered.",
                 status: 403,
                 metadata: { email },
             });
@@ -75,8 +75,7 @@ export async function action({ request }: ActionArgs) {
         });
     } catch (cause) {
         // Same with error with this case
-        return json({
-            error: "Something is wrong with credentials.",
+        return response.error("Something is wrong with credentials.", {
             authSession: null,
         });
     }
@@ -112,14 +111,6 @@ export default function Join() {
                                 className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
                                 disabled={isProcessing}
                             />
-                            {actionResponse?.error && (
-                                <div
-                                    className="pt-1 text-red-700"
-                                    id="name-error"
-                                >
-                                    {actionResponse?.error.toString()}
-                                </div>
-                            )}
                         </div>
                     </div>
 
@@ -140,14 +131,6 @@ export default function Join() {
                                 className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
                                 disabled={isProcessing}
                             />
-                            {/* {actionResponse?.error.message && (
-                                <div
-                                    className="pt-1 text-red-700"
-                                    id="email-error"
-                                >
-                                    {actionResponse?.error.message}
-                                </div>
-                            )} */}
                         </div>
                     </div>
 
@@ -163,34 +146,25 @@ export default function Join() {
                                 data-test-id="password"
                                 name="password"
                                 type="password"
-                                autoComplete="new-password"
                                 className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
                                 disabled={isProcessing}
                             />
-                            {/* {actionResponse?.error.message && (
-                                <div
-                                    className="pt-1 text-red-700"
-                                    id="password-error"
-                                >
-                                    {actionResponse?.error.message}
-                                </div>
-                            )} */}
                         </div>
+                        {actionResponse?.error.message && (
+                            <div
+                                className="pt-1 text-red-700"
+                                id="password-error"
+                            >
+                                {actionResponse?.error.message}
+                            </div>
+                        )}
                     </div>
 
-                    <input
-                        type="hidden"
-                        // name={zo.fields.redirectTo()}
-                        value={redirectTo}
-                    />
+                    <input type="hidden" name="redirectTo" value={redirectTo} />
                     {/* <Button className="w-full" disabled={isProcessing}>
                         {isProcessing ? "..." : "Create Account"}
                     </Button> */}
-                    <button
-                        type="submit"
-                        className="w-full"
-                        disabled={isProcessing}
-                    >
+                    <button className="w-full" disabled={isProcessing}>
                         {isProcessing ? "..." : "Create Account"}
                     </button>
                     <div className="flex items-center justify-center">
@@ -199,35 +173,16 @@ export default function Join() {
                             <Link
                                 className="text-indigo-500 underline"
                                 to={{
-                                    pathname: "/login",
+                                    pathname: "/auth/user/login",
                                     search: searchParams.toString(),
                                 }}
                             >
-                                Log in
+                            Log In
                             </Link>
                         </div>
                     </div>
-                    {/* {actionResponse?.error ? (
-                        <div className="pt-1 text-red-700" id="name-error">
-                            {actionResponse.error.message}
-                        </div>
-                    ) : null} */}
                 </Form>
             </div>
         </div>
     );
 }
-
-// export default function UserRegister() {
-//     return (
-//         <Form method="post" className="border-2">
-//             <label>username</label>
-//             <input type="text" name="name" defaultValue="test" />
-//             <label>email</label>
-//             <input type="email" name="email" defaultValue="test@test.com" />
-//             <label>password</label>
-//             <input type="password" name="password" defaultValue="password" />
-//             <button type="submit">submit</button>
-//         </Form>
-//     );
-// }

@@ -89,14 +89,6 @@ export default function LoginPage() {
                                 className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
                                 disabled={isProcessing}
                             />
-                            {/* {zo.errors.email()?.message && (
-                                <div
-                                    className="pt-1 text-red-700"
-                                    id="email-error"
-                                >
-                                    {zo.errors.email()?.message}
-                                </div>
-                            )} */}
                         </div>
                     </div>
 
@@ -116,14 +108,6 @@ export default function LoginPage() {
                                 className="w-full rounded border border-gray-500 px-2 py-1 text-lg"
                                 disabled={isProcessing}
                             />
-                            {/* {zo.errors.password()?.message && (
-                                <div
-                                    className="pt-1 text-red-700"
-                                    id="password-error"
-                                >
-                                    {zo.errors.password()?.message}
-                                </div>
-                            )} */}
                         </div>
                     </div>
 
@@ -137,7 +121,7 @@ export default function LoginPage() {
                             <Link
                                 className="text-indigo-500 underline"
                                 to={{
-                                    pathname: "/join",
+                                    pathname: "/auth/user/register",
                                     search: searchParams.toString(),
                                 }}
                             >
