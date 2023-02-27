@@ -71,6 +71,12 @@ async function getAuthSession(request: Request): Promise<AuthSession | null> {
     return authSession;
 }
 
+export async function getAdminSession(
+    request: Request
+): Promise<AuthSession | null> {
+    return null;
+}
+
 export async function isAnonymousSession(request: Request): Promise<boolean> {
     const authSession = await getAuthSession(request);
 

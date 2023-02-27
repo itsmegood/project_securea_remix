@@ -28,9 +28,9 @@
 
 ## **Todo** (Adding Soon)
 
--   ### [-] Finish the user auth routes
+-   ### [->] Finish the user auth routes
+-   ### [->] Work on Prisma Schema
 -   ### [x] Get the road map ready
--   ### [x] Work on Prisma Schema
 -   ### [x] Work on Index page and overall frontend
 
 ---
