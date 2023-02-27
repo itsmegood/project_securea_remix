@@ -6,3 +6,7 @@ export type AuthSession = {
     expiresIn: number;
     expiresAt: number;
 };
+
+export type AdminAuthSession = {};
+
+export type CompanyUserSession = {};

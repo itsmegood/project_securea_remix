@@ -10,6 +10,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ! Decide the a fixed timezone for the whole system either UTC or IST
+
+// ! Decide if we want to use a single model for authInfo or separate models for each Type of person
+// ! Auth info will contain the email and name of the person who is signing up, but can also include things like reports, invites, roles, tier, etc.
+
+// ! Refine models further making them efficient and easy to use (eg. add/remove fields, add/remove relations, etc.) - invite campaign, invite, bounty info, etc.
+
+// ! Also figure out transaction processing and handling (handled via UPI, etc.)
+
+// Admin/Staff Section - For internal abstraction
+enum Role {
+  Admin
+  Manager
+  Staff
+}
+
+model HostEmployee {
+  id             String     @id @default(uuid())
+  name           String
+  email          String     @unique
+  role           Role       @default(Staff)
+  companyAccess  Company[]
+  severityAccess Severity[] @default([P3_High, P4_Moderate, P5_Low])
+  invites        Invite[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@map("hostEmployees")
+}
+
 // Users/Hackers Section
 
 // Add more tiers if needed
@@ -20,13 +50,14 @@ enum TierId {
   Master
   Ace
   Legend
+  OverLord
   God
 }
 
 // Models
 model User {
-  id        String   @id
-  name      String
+  id        String   @id @unique @default(uuid())
+  name      String   @unique
   email     String   @unique
   tierId    TierId   @default(Beginner)
   reports   Report[]
@@ -37,32 +68,39 @@ model User {
   @@map("users")
 }
 
-model Invite {
-  id                 String    @id @default(cuid())
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId             String    @unique
-  acceptanceStatus   Boolean?  @default(false)
-  currentPeriodStart DateTime?
-  currentPeriodEnd   DateTime?
-  cancelAtPeriodEnd  Boolean?  @default(false)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  @@map("invites")
+// Company Section
+enum CompanyEmployeeStatus {
+  Senior
+  Junior
 }
 
-// Company Section
-
 model Company {
-  id          String   @id @default(uuid())
-  name        String
-  description String
-  isPublic    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  Report      Report[]
+  id            String            @id @unique @default(uuid())
+  name          String            @unique
+  description   String
+  isPublic      Boolean           @default(false)
+  Report        Report[]
+  hostEmployees HostEmployee[]
+  privateStaff  CompanyEmployee[]
+  invites       Invite[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   @@map("companies")
+}
+
+model CompanyEmployee {
+  id        String                @id @unique @default(cuid())
+  name      String                @unique
+  email     String                @unique
+  status    CompanyEmployeeStatus @default(Junior)
+  company   Company               @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  companyId String
+  invites   Invite[]
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  @@map("companyEmployees")
 }
 
 // Shared
@@ -84,18 +122,78 @@ enum Severity {
 }
 
 // Models
+// model authInfo {
+//   id        String   @id @unique @default(uuid())
+//   name      String   @unique
+//   email     String   @unique
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("authInfo")
+// }
+
+model Invite {
+  id                      String           @id @unique @default(cuid())
+  acceptanceStatus        Boolean?         @default(false)
+  cancelAtPeriodEnd       Boolean?         @default(false)
+  periodEnd               DateTime?
+  company                 Company          @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  companyId               String
+  receiverUser            User             @relation(fields: [receiverUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  receiverUserId          String           @unique
+  senderCompanyEmployee   CompanyEmployee? @relation(fields: [senderCompanyEmployeeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  senderCompanyEmployeeId String?          @unique
+  senderHostEmployee      HostEmployee?    @relation(fields: [senderHostEmployeeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  senderHostEmployeeId    String?          @unique
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  InviteCampaign          InviteCampaign?  @relation(fields: [inviteCampaignId], references: [id])
+  inviteCampaignId        String?
+
+  @@map("invites")
+}
+
+model InviteCampaign {
+  id               String   @id @unique @default(cuid())
+  randomPool       Boolean  @default(true)
+  numberOfInvites  Int      @default(15)
+  tierId           TierId   @default(Learner)
+  repeat           Boolean  @default(false)
+  //TODO: Add Range to Period Days in zod type check till 30 days
+  repeatPeriodDays Int      @default(7)
+  invites          Invite[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("inviteCampaigns")
+}
+
 model Report {
-  id        String   @id @default(uuid())
-  isPublic  Boolean  @default(false)
-  status    Status   @default(Pending)
-  priority  Severity
-  content   String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String       @id @unique @default(uuid())
+  isPublic    Boolean      @default(false)
+  status      Status       @default(Pending)
+  isDuplicate Boolean      @default(false)
+  content     String
+  priority    Severity
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId   String
+  BountyInfo  BountyInfo[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@map("reports")
+}
+
+model BountyInfo {
+  id             String   @id @unique @default(uuid())
+  bountyPoints   Int      @default(0)
+  bountyRewarded Int      @default(0)
+  report         Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  reportId       String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("bountyInfo")
 }
