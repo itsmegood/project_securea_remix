@@ -17,7 +17,7 @@ datasource db {
 
 // ! Refine models further making them efficient and easy to use (eg. add/remove fields, add/remove relations, etc.) - invite campaign, invite, bounty info, etc.
 
-// ! Also figure out transaction processing and handling (handled via UPI, etc.)
+// ! Also figure out transaction processing and handling (handled via UPI)
 
 // Admin/Staff Section - For internal abstraction
 enum Role {
@@ -27,17 +27,25 @@ enum Role {
 }
 
 model HostEmployee {
-  id             String     @id @default(uuid())
+  id             String                @id @default(uuid())
   name           String
-  email          String     @unique
-  role           Role       @default(Staff)
+  email          String                @unique
+  password       HostEmployeePassword?
+  role           Role                  @default(Staff)
   companyAccess  Company[]
-  severityAccess Severity[] @default([P3_High, P4_Moderate, P5_Low])
+  severityAccess Severity[]            @default([P3_High, P4_Moderate, P5_Low])
   invites        Invite[]
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 
   @@map("hostEmployees")
+}
+
+model HostEmployeePassword {
+  hash String
+
+  user   HostEmployee @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  userId String       @unique
 }
 
 // Users/Hackers Section
@@ -56,16 +64,24 @@ enum TierId {
 
 // Models
 model User {
-  id        String   @id @unique @default(uuid())
-  name      String   @unique
-  email     String   @unique
-  tierId    TierId   @default(Beginner)
+  id        String        @id @unique @default(uuid())
+  name      String        @unique
+  email     String        @unique
+  tierId    TierId        @default(Beginner)
+  password  UserPassword?
   reports   Report[]
   invites   Invite[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   @@map("users")
+}
+
+model UserPassword {
+  hash String
+
+  user   User   @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  userId String @unique
 }
 
 // Company Section
@@ -175,9 +191,9 @@ model Report {
   isDuplicate Boolean      @default(false)
   content     String
   priority    Severity
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId      String
-  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   companyId   String
   BountyInfo  BountyInfo[]
   createdAt   DateTime     @default(now())
@@ -190,7 +206,7 @@ model BountyInfo {
   id             String   @id @unique @default(uuid())
   bountyPoints   Int      @default(0)
   bountyRewarded Int      @default(0)
-  report         Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  report         Report   @relation(fields: [reportId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   reportId       String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
